@@ -1,21 +1,27 @@
+-- FIXME or should I indeed define everything for automata first and add MSFs separately?
+{-# LANGUAGE NamedFieldPuns #-}
+
 module Data.MonadicStreamFunction.Bayes where
 
 -- base
 import Control.Arrow
-import Data.Functor (($>))
-import Data.Tuple (swap)
 
 -- transformers
+import Control.Monad.Trans.Reader (ReaderT (..))
 
 -- log-domain
 import Numeric.Log hiding (sum)
 
 -- monad-bayes
-import Control.Monad.Bayes.Population
+import Control.Monad.Bayes.Population (PopulationT (..), fromWeightedList, runPopulationT)
 
--- dunai
-import Data.MonadicStreamFunction
-import Data.MonadicStreamFunction.InternalCore (MSF (..))
+-- mmorph
+import Control.Monad.Morph (hoist)
+
+-- rhine
+import Data.Automaton (AutomatonT (..))
+import Data.Automaton.MSF (MSF (..), handleS)
+import Data.Automaton.Result (Result (..))
 
 -- | Run the Sequential Monte Carlo algorithm continuously on an 'MSF'
 runPopulationS ::
@@ -28,25 +34,34 @@ runPopulationS ::
   MSF (PopulationT m) a b ->
   -- FIXME Why not MSF m a (PopulationT b)
   MSF m a [(b, Log Double)]
-runPopulationS nParticles resampler = runPopulationsS resampler . (spawn nParticles $>)
-
--- | Run the Sequential Monte Carlo algorithm continuously on a 'PopulationT' of 'MSF's
-runPopulationsS ::
-  (Monad m) =>
-  -- | Resampler
-  (forall x. PopulationT m x -> PopulationT m x) ->
-  PopulationT m (MSF (PopulationT m) a b) ->
-  MSF m a [(b, Log Double)]
-runPopulationsS resampler = go
+runPopulationS nParticles resampler =
+  handleS
+    ( runPopulationAutomaton
+        (commuteReaderPopulation . hoist resampler . commuteReaderPopulationBack)
+        . hoist commuteReaderPopulation
+    )
   where
-    go msfs = MSF $ \a -> do
-      -- TODO This is quite different than the dunai version now. Maybe it's right nevertheless.
-      -- FIXME This normalizes, which introduces bias, whatever that means
-      bAndMSFs <- runPopulationT $ normalize $ resampler $ flip unMSF a =<< msfs
-      return $
-        second (go . fromWeightedList . return) $
-          unzip $
-            (swap . fmap fst &&& swap . fmap snd) . swap <$> bAndMSFs
+    commuteReaderPopulation :: forall m r a. (Monad m) => ReaderT r (PopulationT m) a -> PopulationT (ReaderT r m) a
+    commuteReaderPopulation = fromWeightedList . ReaderT . fmap runPopulationT . runReaderT
+
+    commuteReaderPopulationBack :: forall m r a. (Monad m) => PopulationT (ReaderT r m) a -> ReaderT r (PopulationT m) a
+    commuteReaderPopulationBack = ReaderT . fmap fromWeightedList . runReaderT . runPopulationT
+
+    runPopulationAutomaton ::
+      forall m b.
+      (Monad m) =>
+      (forall x. PopulationT m x -> PopulationT m x) ->
+      AutomatonT (PopulationT m) b ->
+      AutomatonT m [(b, Log Double)]
+    runPopulationAutomaton resampler AutomatonT {step, state} =
+      AutomatonT
+        { state = replicate nParticles (state, 1 / fromIntegral nParticles)
+        , step = \states -> do
+            resultsAndProbabilities <- runPopulationT $ normalize $ resampler $ do
+              state <- fromWeightedList $ pure states
+              step state
+            return $! Result (first resultState <$> resultsAndProbabilities) (first output <$> resultsAndProbabilities)
+        }
 
 -- FIXME see PR re-adding this to monad-bayes
 normalize :: (Monad m) => PopulationT m a -> PopulationT m a

@@ -1,5 +1,9 @@
 # Revision history for rhine
 
+## 1.3
+
+* Dropped `dunai` dependency in favour of 
+
 ## 1.2.1
 
 * Added `FRP.Rhine.Clock.Realtime.Never` (clock that never ticks)

@@ -50,6 +50,7 @@ common opts
     monad-schedule ^>=0.1.2,
     mtl >=2.2 && <2.4,
     text >=1.2 && <2.1,
+    time >=1.8,
     transformers >=0.5,
     vector-sized >=1.4,
 
@@ -80,6 +81,8 @@ common test-deps
   build-depends:
     tasty ^>=1.4,
     tasty-hunit ^>=0.10,
+    tasty-quickcheck ^>=0.10,
+    QuickCheck ^>= 2.14,
 
 common bench-deps
   build-depends:
@@ -89,6 +92,22 @@ common bench-deps
 library
   import: opts
   exposed-modules:
+    -- FIXME can we hide all these modules and expose sufficient API for rhine-* packages?
+    Data.Automaton
+    Data.Automaton.Except
+    Data.Automaton.Final
+    Data.Automaton.Final.Except
+    Data.Automaton.MSF
+    Data.Automaton.MSF.Final
+    Data.Automaton.MSF.Trans.Except
+    Data.Automaton.MSF.Trans.Maybe
+    Data.Automaton.MSF.Trans.Random
+    Data.Automaton.MSF.Trans.Reader
+    Data.Automaton.MSF.Trans.RWS
+    Data.Automaton.MSF.Trans.State
+    Data.Automaton.MSF.Trans.Writer
+    Data.Automaton.Optimized
+    Data.Automaton.Result
     FRP.Rhine
     FRP.Rhine.ClSF
     FRP.Rhine.ClSF.Core
@@ -139,12 +158,13 @@ library
     MonadRandom >=0.5,
     containers >=0.5,
     deepseq >=1.4,
-    dunai ^>=0.12.2,
     free >=5.1,
+    mmorph ^>=1.2,
+    profunctors ^>=5.6,
     random >=1.1,
     simple-affine-space ^>=0.2,
+    sop-core ^>=0.5,
     text >=1.2 && <2.1,
-    time >=1.8,
     time-domain ^>=0.1.0.2,
     transformers >=0.5,
 
@@ -162,6 +182,7 @@ test-suite test
     Clock.FixedStep
     Clock.Millisecond
     Paths_rhine
+    Automaton.MSF
     Except
     Schedule
     Util
