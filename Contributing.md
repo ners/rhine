@@ -21,17 +21,13 @@
 * The small version numbers (i.e. `*.*.n.n`) conform to the
   [Haskell Package Versioning Policy](https://pvp.haskell.org/).
 
-### GHC, cabal, stack, nix
+### GHC, Cabal, Nix
 
-* Rhine should be compilable with `cabal`, `nix` (including flakes) and `stack`.
-  If in doubt, use `cabal` and `nix` (preferably flakes with `nix develop`).
+* Rhine should be compilable with Cabal and Nix.
 * Rhine does not make an effort to support old GHC versions,
   but it does make an effort to support _new_ versions.
   Check `rhine/rhine.cabal` for supported GHC versions.
 * The default GHC version is the newest officially released version.
-* Rhine aims to be available through [`stackage`](https://www.stackage.org/package/rhine) and [`nixpkgs`/Nixos](https://github.com/NixOS/nixpkgs/).
-  If you find that it is not available through these channels,
-  it's a bug and you are warmly welcome to report or even fix it.
 
 ### Code quality
 
@@ -50,33 +46,32 @@
 
 1. Optional: Create release-vx.x.x.x branch
 2. Bump versions (including tags)
-3. If possible, bump to latest stackage lts
-4. Check whether we could support a newer GHC (see below) and
+3. Check whether we could support a newer GHC (see below) and
    deprecate old GHCs in case they become a nuisance.
    Rule of thumb: If you'd have to use CPP precompiler blocks, rather deprecate old GHC.
-5. Diff with last version and edit `*/ChangeLog.md`
-6. If release branch: Create pull request on github onto master
-7. Wait for Travis to complete, fixing all build failures.
+4. Diff with last version and edit `*/ChangeLog.md`
+5. If release branch: Create pull request on github onto master
+6. Wait for Travis to complete, fixing all build failures.
    Possibly repeat steps 4. and 5.
-8. Upload to hackage.
-9. Create tag `vx.x.x.x`.
-10. If applicable: Merge release branch into master.
+7. Upload to hackage.
+8. Create tag `vx.x.x.x`.
+9. If applicable: Merge release branch into master.
 
 ### GHC changes checklist
 
 In a pull request, do the following:
 
 1. Add new GHC to `rhine/rhine.cabal`
-2. Add corresponding `stack.*.yaml` file
 
 ## Library layout
 
 The repository is split into these packages:
 
 * `rhine`: The main library
-* `rhine-gloss`: A library connecting `rhine` to [`gloss`](http://hackage.haskell.org/package/gloss)
 * `rhine-bayes`: A library connecting `rhine` to [`monad-bayes`](https://hackage.haskell.org/package/monad-bayes)
 * `rhine-examples`: A zoo of examples using the library and different backends.
+* `rhine-gloss`: A library connecting `rhine` to [`gloss`](http://hackage.haskell.org/package/gloss)
+* `rhine-terminal`: A library connecting `rhine` to [`terminal`](http://hackage.haskell.org/package/terminal)
 
 If you have a contribution, and you are wondering where it should go, you can ask these questions to find the right place:
 
@@ -95,7 +90,6 @@ Contributed backend libraries are of course free to adopt whatever versioning sc
 
 #### Backend library addition checklist
 
-* Add to all `stack.*.yaml` files
 * Add to `flake.nix`
 * Add to `README.md`
 * Add to `.github/workflows/ci.yml`
