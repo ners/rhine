@@ -168,16 +168,12 @@ applyExcept (AutomatonT state1 step1) (AutomatonT state2 step2) =
     step (Right (s2, f)) = mapResultState (Right . (,f)) <$!> withExceptT f (step2 s2)
 {-# INLINE applyExcept #-}
 
-exceptS :: (Monad m) => AutomatonT (ExceptT e m) b -> AutomatonT m (Either e b)
+exceptS :: (Applicative m) => AutomatonT (ExceptT e m) b -> AutomatonT m (Either e b)
 exceptS AutomatonT {state, step} =
   AutomatonT
     { step = \case
-        Left state -> do
-          throwOrResult <- runExceptT $ step state
-          case throwOrResult of
-            Left e -> return $ Result (Right e) (Left e)
-            Right result -> return $ Right <$> mapResultState Left result
-        er@(Right e) -> return $ Result er (Left e) -- FIXME a bit wasteful to create a new Left every time?
+        Left state -> fmap (either (\e -> Result (Right e) (Left e)) (fmap Right . mapResultState Left)) $ runExceptT $ step state
+        er@(Right e) -> pure $ Result er (Left e) -- FIXME a bit wasteful to create a new Left every time?
     , state = Left state
     }
 {-# INLINE exceptS #-}
