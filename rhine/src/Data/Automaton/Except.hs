@@ -10,10 +10,13 @@ import Control.Monad.Trans.Except
 -- mmorph
 import Control.Monad.Morph (hoist)
 
+-- selective
+import Control.Selective
+
 -- rhine
 import Data.Automaton.Final (Final (..))
 import Data.Automaton.Final.Except
-import Data.Automaton.Optimized (OptimizedAutomatonT, applyExcept, constM)
+import Data.Automaton.Optimized (OptimizedAutomatonT, applyExcept, constM, selectExcept)
 import Data.Automaton.Optimized qualified as AutomatonOptimized
 
 data AutomatonExcept m a e
@@ -38,6 +41,10 @@ instance (Monad m) => Applicative (AutomatonExcept m a) where
   pure = InitialExcept . constM . throwE
   InitialExcept f <*> InitialExcept a = InitialExcept $ applyExcept f a
   f <*> a = ap f a
+
+instance (Monad m) => Selective (AutomatonExcept m a) where
+  select (InitialExcept e) (InitialExcept f) = InitialExcept $ selectExcept e f
+  select e f = selectM e f
 
 -- | 'return'/'pure' throw exceptions, '(>>=)' uses the last thrown exception as input for an exception handler.
 instance (Monad m) => Monad (AutomatonExcept m a) where

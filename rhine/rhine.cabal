@@ -167,6 +167,7 @@ library
     text >=1.2 && <2.1,
     time-domain ^>=0.1.0.2,
     transformers >=0.5,
+    selective ^>= 0.7,
 
   -- Directories containing source files.
   hs-source-dirs: src

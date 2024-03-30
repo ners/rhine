@@ -136,3 +136,6 @@ exceptS automaton = Stateful $ AutomatonT.exceptS $ toAutomatonT automaton
 applyExcept :: (Monad m) => OptimizedAutomatonT (ExceptT (e1 -> e2) m) a -> OptimizedAutomatonT (ExceptT e1 m) a -> OptimizedAutomatonT (ExceptT e2 m) a
 applyExcept automatonF automatonA = Stateful $ AutomatonT.applyExcept (toAutomatonT automatonF) (toAutomatonT automatonA)
 {-# INLINE applyExcept #-}
+
+selectExcept :: (Monad m) => OptimizedAutomatonT (ExceptT (Either e1 e2) m) a -> OptimizedAutomatonT (ExceptT (e1 -> e2) m) a -> OptimizedAutomatonT (ExceptT e2 m) a
+selectExcept automatonE automatonF = Stateful $ AutomatonT.selectExcept (toAutomatonT automatonE) (toAutomatonT automatonF)

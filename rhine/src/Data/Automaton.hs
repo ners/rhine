@@ -10,6 +10,7 @@ module Data.Automaton where
 
 -- base
 import Control.Applicative (Alternative (..), liftA2)
+import Data.Bifunctor (bimap)
 import Data.Monoid (Ap (..))
 
 -- mmorph
@@ -18,11 +19,13 @@ import Control.Monad.Morph (MFunctor (hoist))
 -- simple-affine-space
 import Data.VectorSpace (VectorSpace (..))
 
--- rhine
+-- selective
+import Control.Selective
 
+-- rhine
 import Control.Monad ((<$!>))
 import Control.Monad.Trans.Class
-import Control.Monad.Trans.Except (ExceptT, runExceptT, withExceptT)
+import Control.Monad.Trans.Except (ExceptT, runExceptT, throwE, withExceptT)
 import Data.Automaton.Result
 
 data AutomatonT m b = forall s.
@@ -132,7 +135,6 @@ concatS AutomatonT {state, step} =
     go (s, a : as) = return $ Result (s, as) a
 {-# INLINE concatS #-}
 
--- FIXME selective should also be easy
 applyExcept :: (Monad m) => AutomatonT (ExceptT (e1 -> e2) m) a -> AutomatonT (ExceptT e1 m) a -> AutomatonT (ExceptT e2 m) a
 applyExcept (AutomatonT state1 step1) (AutomatonT state2 step2) =
   AutomatonT
@@ -161,3 +163,31 @@ exceptS AutomatonT {state, step} =
     , state = Left state
     }
 {-# INLINE exceptS #-}
+
+selectExcept :: (Monad m) => AutomatonT (ExceptT (Either e1 e2) m) a -> AutomatonT (ExceptT (e1 -> e2) m) a -> AutomatonT (ExceptT e2 m) a
+selectExcept (AutomatonT stateE0 stepE) (AutomatonT stateF0 stepF) =
+  AutomatonT
+    { state = Left stateE0
+    , step
+    }
+  where
+    step (Left stateE) = do
+      resultOrException <- lift $ runExceptT $ stepE stateE
+      case resultOrException of
+        Right result -> return $ mapResultState Left result
+        Left (Left e1) -> step (Right (e1, stateF0))
+        Left (Right e2) -> throwE e2
+    step (Right (e1, stateF)) = withExceptT ($ e1) $ mapResultState (Right . (e1,)) <$> stepF stateF
+
+-- FIXME test
+instance (Selective m) => Selective (AutomatonT m) where
+  select (AutomatonT stateE0 stepE) (AutomatonT stateF0 stepF) =
+    AutomatonT
+      { state = JointState stateE0 stateF0
+      , step = \(JointState stateE stateF) ->
+          (fmap (mapResultState (`JointState` stateF)) . eitherResult <$> stepE stateE)
+            <*? ((\(Result stateF' f) (Result stateE' a) -> Result (JointState stateE' stateF') (f a)) <$> stepF stateF)
+      }
+    where
+      eitherResult :: Result s (Either a b) -> Either (Result s a) (Result s b)
+      eitherResult (Result s eab) = bimap (Result s) (Result s) eab

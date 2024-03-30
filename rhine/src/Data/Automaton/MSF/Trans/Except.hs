@@ -26,6 +26,9 @@ import Control.Monad.Trans.Except hiding (
 import Control.Monad.Trans.Maybe (MaybeT, runMaybeT)
 import Data.Void (Void)
 
+-- selective
+import Control.Selective (Selective)
+
 -- Internal imports
 
 import Control.Monad.Morph
@@ -161,9 +164,21 @@ exception type/.
   * @a@: The input type
   * @b@: The output type
   * @e@: The type of exceptions that can be thrown
+
+In order to achieve higher performance, you should use the 'Monad' interface sparingly, though.
+Whenever you can express the same control flow using 'Functor', 'Applicative' and 'Selective',
+you should do this.
+The encoding of the internal state type will be much more efficiently optimized.
+
+The reason for this is that in an expression @ma >>= f@,
+the type of @f@ is @e1 -> MSFExcept m a b e2@,
+which implies that the state of the 'MSFExcept' produced isn't known at compile time,
+and thus GHC cannot optimize the automaton.
+But often the full expressiveness of '>>=' isn't necessary, and in these cases,
+a much faster automaton is produced by using 'Functor', 'Applicative' and 'Selective'.
 -}
 newtype MSFExcept m a b e = MSFExcept {getMSFExcept :: AutomatonExcept (ReaderT a m) b e}
-  deriving newtype (Functor, Applicative, Monad)
+  deriving newtype (Functor, Applicative, Selective, Monad)
 
 runMSFExcept :: (Monad m) => MSFExcept m a b e -> MSF (ExceptT e m) a b
 runMSFExcept = MSF . hoist commuteReaderBack . runExceptS . getMSFExcept
