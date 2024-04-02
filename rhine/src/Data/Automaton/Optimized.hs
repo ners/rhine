@@ -82,6 +82,12 @@ instance (Alternative m) => Alternative (OptimizedAutomatonT m) where
   automaton1 <|> automaton2 = Stateful $ toAutomatonT automaton1 <|> toAutomatonT automaton2
   {-# INLINE (<|>) #-}
 
+  many automaton = Stateful $ many $ toAutomatonT automaton
+  {-# INLINE many #-}
+
+  some automaton = Stateful $ some $ toAutomatonT automaton
+  {-# INLINE some #-}
+
 instance MFunctor OptimizedAutomatonT where
   hoist f (Stateful automaton) = Stateful $ hoist f automaton
   hoist f (Stateless m) = Stateless $ f m
