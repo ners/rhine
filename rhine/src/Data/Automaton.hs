@@ -205,3 +205,28 @@ instance (Selective m) => Selective (AutomatonT m) where
     where
       eitherResult :: Result s (Either a b) -> Either (Result s a) (Result s b)
       eitherResult (Result s eab) = bimap (Result s) (Result s) eab
+
+fixAutomaton :: (Functor m) => (forall s. s -> t s) -> (forall s. (s -> m (Result s a)) -> (t s -> m (Result (t s) a))) -> AutomatonT m a
+fixAutomaton transformState transformStep =
+  AutomatonT
+    { state = fixState transformState
+    , step
+    }
+  where
+    step Fix {getFix} = mapResultState Fix <$> transformStep step getFix
+
+newtype Fix t = Fix {getFix :: t (Fix t)}
+
+fixState :: (forall s. s -> t s) -> Fix t
+fixState transformState = go
+  where
+    go = Fix $ transformState go
+
+fixAutomaton' :: (Functor m) => (forall s. s -> t s) -> (forall s. s -> (s -> m (Result s a)) -> (t s -> m (Result (t s) a))) -> AutomatonT m a
+fixAutomaton' transformState transformStep =
+  AutomatonT
+    { state = fixState transformState
+    , step
+    }
+  where
+    step fix@(Fix {getFix}) = mapResultState Fix <$> transformStep fix step getFix
