@@ -43,6 +43,7 @@ import Data.Automaton.Optimized (
  )
 import Data.Automaton.Optimized qualified as AutomatonOptimized
 import Data.Automaton.Result
+import Data.Monoid (Sum(..))
 
 newtype MSF m a b = MSF {getMSF :: OptimizedAutomatonT (ReaderT a m) b}
   deriving newtype (Functor, Applicative, Alternative, Num, Fractional, Floating)
@@ -325,6 +326,9 @@ sumFrom = accumulateWith (^+^)
 
 sumS :: (Monad m, VectorSpace v s) => MSF m v v
 sumS = sumFrom zeroVector
+
+sumN :: (Monad m, Num a) => MSF m a a
+sumN = arr Sum >>> mappendS >>> arr getSum
 
 embed :: (Monad m) => MSF m a b -> [a] -> m [b]
 embed _msf [] = return []
