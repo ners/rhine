@@ -279,7 +279,10 @@ instance (Monad m) => Traversing (MSF m) where
 mapMaybeS :: (Monad m) => MSF m a b -> MSF m (Maybe a) (Maybe b)
 mapMaybeS = traverse'
 
--- FIXME docs that say that you absolutely need to use this! you can.t roll your own list pattern matching in arrow notation!
+{- | Use an 'MSF' with a variable amount of input.
+
+
+-}
 traverseS :: (Monad m, Traversable f) => MSF m a b -> MSF m (f a) (f b)
 traverseS = traverse'
 
