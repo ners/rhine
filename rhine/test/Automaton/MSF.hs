@@ -12,6 +12,9 @@ import Test.Tasty (testGroup)
 -- tasty-quickcheck
 import Test.Tasty.QuickCheck
 
+-- tasty-hunit
+import Test.Tasty.HUnit (testCase, (@?=), (@=?))
+
 -- rhine
 import Data.Automaton.MSF.Final
 import Data.Automaton.MSF.Trans.Maybe
@@ -37,6 +40,10 @@ tests =
                     === embed (fromFinal $ some $ toFinal inMaybe) input
             ]
         ]
+    , testGroup
+      "parallely"
+      [testCase "Outputs separate sums" $ runIdentity (embed (parallely sumN) [[], [], [1,2], [10, 20], [100], [], [1000, 200]]) @=? [[], [], [1, 2], [11, 22], [111], [], [1111, 222]]
+      ]
     ]
 
 inMaybe :: MSF Maybe (Maybe a) a
