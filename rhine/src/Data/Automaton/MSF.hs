@@ -1,10 +1,11 @@
-{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Data.Automaton.MSF where
 
@@ -35,7 +36,7 @@ import Data.Profunctor.Traversing
 import Data.VectorSpace (VectorSpace (..))
 
 -- rhine
-import Data.Automaton (AutomatonT (..), JointState (..))
+import Data.Automaton (AutomatonT (..), JointState (..), fixAutomaton, apResult)
 import Data.Automaton.Optimized (
   OptimizedAutomatonT (..),
   concatS,
@@ -284,6 +285,19 @@ traverseS = traverse'
 
 traverseS_ :: (Monad m, Traversable f) => MSF m a b -> MSF m (f a) ()
 traverseS_ msf = traverse' msf >>> arr (const ())
+
+-- FIXME test whether this does what I think it does
+{- |
+
+Caution: Uses memory of the order of the largest list that was ever input during runtime.
+-}
+parallely :: (Applicative m) => MSF m a b -> MSF m [a] [b]
+parallely msf = MSF $ Stateful $ parallely' $ AutomatonOptimized.toAutomatonT $ getMSF msf
+  where
+    parallely' :: Applicative m => AutomatonT (ReaderT a m) b -> AutomatonT (ReaderT [a] m) [b]
+    parallely' AutomatonT {state, step} = fixAutomaton (JointState state) $ \fixstep jointState@(JointState s fixstate) -> ReaderT $ \case
+      [] -> pure $! Result jointState []
+      (a : as) -> apResult . fmap (:) <$> runReaderT (step s) a <*> runReaderT (fixstep fixstate) as
 
 -- FIXME naming isn't great?
 mapS :: (Monad m) => (forall m. (Monad m) => AutomatonT m a -> AutomatonT m b) -> MSF m i a -> MSF m i b
