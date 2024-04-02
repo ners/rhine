@@ -215,7 +215,7 @@ fixAutomaton transformState transformStep =
   where
     step Fix {getFix} = mapResultState Fix <$> transformStep step getFix
 
-newtype Fix t = Fix {getFix :: t (Fix t)}
+data Fix t = Fix {getFix :: ~(t (Fix t))}
 
 fixState :: (forall s. s -> t s) -> Fix t
 fixState transformState = go
