@@ -319,6 +319,7 @@ concatS (MSF automaton) = MSF $ Data.Automaton.Optimized.concatS automaton
 withSideEffect :: (Monad m) => (a -> m b) -> MSF m a a
 withSideEffect f = (id &&& arrM f) >>> arr fst
 
+-- FIXME Rewrite with feedback?
 accumulateWith :: (Monad m) => (a -> b -> b) -> b -> MSF m a b
 accumulateWith f state =
   MSF $!
