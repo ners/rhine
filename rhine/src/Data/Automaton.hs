@@ -120,7 +120,22 @@ instance (Alternative m) => Alternative (AutomatonT m) where
       }
   {-# INLINE (<|>) #-}
 
+  -- FIXME test with parsing example
+  many AutomatonT {state, step} = fixAutomaton'
+    (const NotStarted)
+    $ \fixstate fixstep -> \case
+      NotStarted -> ((\(Result s' a) (Result ss' as) -> Result (Ongoing ss' s') $ a : as) <$> step state <*> fixstep fixstate) <|> pure (Result Finished [])
+      Finished -> pure $! Result Finished []
+      Ongoing ss s -> (\(Result s' a) (Result ss' as) -> Result (Ongoing ss' s') $ a : as) <$> step s <*> fixstep ss
+  -- {-# INLINE many #-}
+
+  some automaton = (:) <$> automaton <*> many automaton
+  -- {-# INLINE some #-}
+
 data Alternatively stateL stateR = Undecided | DecideL stateL | DecideR stateR
+
+-- data Many state = NotStarted | Ongoing (Many state) state | Finished
+data Many state x = NotStarted | Ongoing x state | Finished
 
 instance MFunctor AutomatonT where
   hoist f AutomatonT {state, step} = AutomatonT {state, step = f <$> step}
