@@ -66,17 +66,8 @@ Such a fix point operator is needed because recursive definitions of automata
 loop at runtime due to the initial encoding of the state.
 -}
 fixA :: (Applicative m) => AutomatonT m (a -> a) -> AutomatonT m a
-fixA AutomatonT {state, step} =
-  AutomatonT
-    { state = fixAState state
-    , step = stepFixA
-    }
-  where
-    stepFixA (FixA s ss) = (\(Result s' f) (Result ss' a) -> Result (FixA s' ss') $ f a) <$> step s <*> stepFixA ss
-
-data FixA s = FixA s ~(FixA s)
-fixAState :: s -> FixA s
-fixAState s = FixA s $ fixAState s
+fixA AutomatonT {state, step} = fixAutomaton (JointState state) $
+  \stepA (JointState s ss) -> apResult <$> step s <*> stepA ss
 
 deriving via Ap (AutomatonT m) a instance (Applicative m, Num a) => Num (AutomatonT m a)
 
