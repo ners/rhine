@@ -10,8 +10,13 @@ module Data.Automaton where
 
 -- base
 import Control.Applicative (Alternative (..), liftA2)
+import Control.Monad ((<$!>))
 import Data.Bifunctor (bimap)
 import Data.Monoid (Ap (..))
+
+-- transformers
+import Control.Monad.Trans.Class
+import Control.Monad.Trans.Except (ExceptT, runExceptT, throwE, withExceptT)
 
 -- mmorph
 import Control.Monad.Morph (MFunctor (hoist))
@@ -23,9 +28,6 @@ import Data.VectorSpace (VectorSpace (..))
 import Control.Selective
 
 -- rhine
-import Control.Monad ((<$!>))
-import Control.Monad.Trans.Class
-import Control.Monad.Trans.Except (ExceptT, runExceptT, throwE, withExceptT)
 import Data.Automaton.Result
 
 data AutomatonT m b = forall s.
