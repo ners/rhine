@@ -189,6 +189,7 @@ instance (MonadFix m) => ArrowLoop (MSF m) where
 
 instance (Monad m, Alternative m) => ArrowZero (MSF m) where
   zeroArrow = empty
+
 instance (Monad m, Alternative m) => ArrowPlus (MSF m) where
   (<+>) = (<|>)
 
