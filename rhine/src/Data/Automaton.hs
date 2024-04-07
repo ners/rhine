@@ -247,3 +247,13 @@ fixAutomaton' transformState transformStep =
     }
   where
     step fix@(Fix {getFix}) = mapResultState Fix <$> transformStep fix step getFix
+
+-- FIXME rewrite with Maybe? or replicateM & state?
+takeAutomaton :: Monad m => Int -> AutomatonT m a -> m [a]
+takeAutomaton n _ | n <= 0 = return []
+takeAutomaton n AutomatonT {state, step} = go n state
+ where
+  go n _ | n <= 0 = return []
+  go n s = do
+    Result s' a <- step s
+    (a :) <$> go (n - 1) s'
