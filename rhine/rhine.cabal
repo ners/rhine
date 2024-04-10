@@ -204,6 +204,7 @@ benchmark benchmark
   autogen-modules: Paths_rhine
   other-modules:
     Paths_rhine
+    Sum
     WordCount
 
   build-depends:
@@ -228,6 +229,7 @@ test-suite benchmark-test
   autogen-modules: Paths_rhine
   other-modules:
     Paths_rhine
+    Sum
     WordCount
 
   build-depends:
