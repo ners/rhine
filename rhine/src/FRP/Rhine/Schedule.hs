@@ -159,12 +159,14 @@ instance
 type family In cl where
   In (SequentialClock cl1 cl2) = In cl1
   In (ParallelClock cl1 cl2) = ParallelClock (In cl1) (In cl2)
+  In (HoistClock m1 m2 cl) = HoistClock m1 m2 (In cl)
   In cl = cl
 
 -- | The clock that represents the rate at which data leaves the system.
 type family Out cl where
   Out (SequentialClock cl1 cl2) = Out cl2
   Out (ParallelClock cl1 cl2) = ParallelClock (Out cl1) (Out cl2)
+  Out (HoistClock m1 m2 cl) = HoistClock m1 m2 (Out cl)
   Out cl = cl
 
 {- | A tree representing possible last times to which
