@@ -16,7 +16,7 @@ module Data.TimeDomain (
 where
 
 -- time
-import Data.Time.Clock (UTCTime, addUTCTime, diffUTCTime)
+import Data.Time.Clock (NominalDiffTime, UTCTime, addUTCTime, diffUTCTime)
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
 
 {- |
@@ -73,10 +73,14 @@ class TimeDifference d where
 
 -- | Differences between 'UTCTime's are measured in seconds.
 instance TimeDomain UTCTime where
-  type Diff UTCTime = Double
+  type Diff UTCTime = NominalDiffTime
   epoch = posixSecondsToUTCTime 0
-  diffTime t1 t2 = realToFrac $ diffUTCTime t1 t2
-  addTime = flip $ addUTCTime . realToFrac
+  diffTime = diffUTCTime
+  addTime = flip addUTCTime
+
+instance TimeDifference NominalDiffTime where
+  difference = (-)
+  add = (+)
 
 instance TimeDifference Double where
   zero = 0
